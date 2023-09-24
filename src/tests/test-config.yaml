@@ -1,0 +1,69 @@
+parsers:
+  md_table:
+    options:
+      format: '%H:%M'
+      date_override: header
+
+loggers:
+  - type: console
+    name: console
+    always_present: false
+    confirm_prompt: false
+    priority: 1
+    options: {}
+    aggregate:
+      - group:
+          - field: task
+        transform:
+            - field: description
+              template: "  - {description}\n"
+
+  - type: jira
+    name: jira
+    always_present: false
+    confirm_prompt: false
+    priority: 2
+    options:
+      url: https://jira.domain.com
+      access_token: test-jira-access-token
+    aggregate:
+      - group:
+          - field: task
+          - field: description
+            function: regex
+            args:
+              - ^\[[a-zA-Z]+\]
+        transform:
+            - field: description
+              template: "  - {description}\n"
+
+  - type: redmine
+    name: redmine
+    always_present: false
+    confirm_prompt: false
+    priority: 3
+    options:
+      url: https://redmine.domain.com
+      access_key: test-redmine-access-key
+      project_id: 0
+      activity_id: 1
+    aggregate:
+      - group:
+          - field: task
+      - transform:
+          - field: description
+            template: "{task}: {duration_hours}hours; "
+    hooks:
+      on_success:
+        - action: open_link
+          options:
+            browser: firefox
+            url: http://link.to.open.on.success
+      on_failure:
+        - action: open_link
+          options:
+            browser: firefox
+            url: http://link.to.open.on.failure
+
+    
+  

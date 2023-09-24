@@ -1,0 +1,93 @@
+parsers:
+  md_table:
+    options:
+      format: '%H:%M'
+      date_override: header # allowed values: today, header or date string
+
+loggers:
+  - type: console
+    name: console-total
+    always_present: true
+    confirm_prompt: false
+    priority: 0
+    options: {}
+    aggregate:
+        - transform:
+          - field: task
+            template: "TOTAL WORK"
+        - transform:
+          - field: description
+            template: "------------------------"
+
+  - type: console
+    name: console-per-task
+    always_present: true
+    confirm_prompt: false
+    priority: 1
+    options: {} # logger type specific options
+    aggregate:
+      - group:
+          - field: task # supported group fields: task or description
+        transform: # before concatenating group fields there is a chance to modify string fields
+          - field: description # task or description
+            template: "  - {description}\n"
+
+  - type: jira
+    name: jira
+    always_present: false
+    confirm_prompt: true
+    priority: 2
+    options:
+      url: https://jira.domain.com
+      access_token: your-jira-access-token
+    aggregate:
+      - group: # there grouping on multiple fields
+          - field: task
+          - field: description
+            function: regex # only regex supported. useful when group by should be performed on a part of a field, for example when using some sort of tags.
+            args:
+              - ^\[[a-zA-Z]+\]
+        transform:
+          - field: description
+            template: "{description}\n"
+    hooks:
+      on_success:
+        - action: open_link
+          options:
+            browser: firefox
+            url: http://link.to.open.on.success
+      on_failure:
+        - action: open_link
+          options:
+            browser: firefox
+            url: http://link.to.open.on.failure
+
+  - type: redmine
+    name: redmine
+    always_present: false
+    confirm_prompt: true
+    priority: 3
+    options:
+      url: https://adana.telesoftas.net
+      access_key: 5db9790db46d89ef82467aed02fcfbf2822bd798
+      project_id: 1140
+      activity_id: 1605
+    aggregate: # aggregations can be combined. here first aggregate output is passed as an input for the first aggregate
+      - group:
+          - field: task
+        transform:
+          - field: description
+            template: "  - {description}\n"
+      - transform: # group is absent in this section, meaning all rows belongs to the same group.
+          - field: description
+            template: "{task}: {duration_hours}hours; "
+    hooks:
+      on_success:
+        - action: open_link
+          options:
+            browser: firefox
+            url: http://link.to.open.on.success
+
+
+    
+  

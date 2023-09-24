@@ -1,0 +1,7 @@
+#! /bin/bash
+
+DIR=$(dirname "$0")
+SCRIPT=$DIR/../src/main.py
+CONFIG_FILE=$DIR/../config.yaml
+
+python3 $SCRIPT --config_file $CONFIG_FILE "$@"
